@@ -1,17 +1,44 @@
 package ma.ensa;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+import ma.ensa.db.DatabaseManager;
+import ma.ensa.db.MySQLDatabaseManager;
+import ma.ensa.db.PostgreSQLDatabaseManager;
+import ma.ensa.db.SQLServerDatabaseManager;
+import ma.ensa.util.DBConfig;
+import ma.ensa.util.DBConfigLoader;
+
+import java.util.List;
+import java.util.Map;
+
+
 public class Main {
     public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
+        String fichierConfig;
+        //fichierConfig = "db.properties";
+        fichierConfig = "dbPostgreSql.properties";
+        //fichierConfig = "dbSqlServer.properties";
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
+        DBConfig config = DBConfigLoader.load(fichierConfig);
+        DatabaseManager dbManager;
+
+        switch (config.getType().toLowerCase()) {
+            case "mysql":
+                dbManager = new MySQLDatabaseManager(config);
+                break;
+            case "postgresql":
+                dbManager = new PostgreSQLDatabaseManager(config);
+                break;
+            case "sqlserver":
+                dbManager = new SQLServerDatabaseManager(config);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported DB type");
         }
+
+        dbManager.connect();
+        List<Map<String, Object>> result = dbManager.executeQuery("SELECT * FROM users");
+        result.forEach(System.out::println);
+        dbManager.disconnect();
+
     }
 }
